@@ -11,9 +11,13 @@ st.write("Turn your study notes into summaries, practice quizzes, and key-term e
 
 with st.sidebar:
     st.header("Settings")
-    api_key = st.text_input("Google Gemini API key", type="password")
+    saved_key = st.secrets.get("GEMINI_API_KEY", "") if hasattr(st, "secrets") else ""
+    entered_key = st.text_input("Google Gemini API key", type="password",
+                                help="Paste a valid key from Google AI Studio. Never share it publicly.")
+    api_key = entered_key.strip() or str(saved_key).strip()
     model = st.selectbox("Gemini model", ["gemini-3.8-flash"])
-    st.markdown("[Get an API key](https://aistudio.google.com/apikey)")
+    st.markdown("[Create or check your API key in Google AI Studio](https://aistudio.google.com/apikey)")
+    st.caption("You can enter the key here, or save GEMINI_API_KEY in Streamlit app Secrets.")
 
 method = st.radio("Add your study material", ["Paste notes", "Upload PDF"], horizontal=True)
 notes = ""
@@ -71,7 +75,12 @@ NOTES:
 
                 st.session_state["pack"] = json.loads(response.text)
         except Exception as exc:
-            st.error(f"Could not generate the study pack: {exc}")
+            error_text = str(exc)
+            if "API_KEY_INVALID" in error_text or "API key not valid" in error_text:
+                st.error("Your Gemini API key is invalid. Open Google AI Studio, create or copy a valid API key, then paste it into the API key box in the sidebar. Check that there are no extra spaces. Do not paste your key into GitHub or this chat.")
+                st.markdown("[Open Google AI Studio API keys](https://aistudio.google.com/apikey)")
+            else:
+                st.error(f"Could not generate the study pack: {exc}")
 
 pack = st.session_state.get("pack")
 if pack:
