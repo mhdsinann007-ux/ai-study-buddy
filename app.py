@@ -11,7 +11,7 @@ st.write("Turn your study notes into summaries, practice quizzes, and key-term e
 with st.sidebar:
     st.header("Settings")
     api_key = st.text_input("Google Gemini API key", type="password")
-    model = st.selectbox("Gemini model", ["gemini-2.5-flash", "gemini-2.0-flash"])
+    model = st.selectbox("Gemini model", ["gemini-3.8-flash"])
     st.markdown("[Get an API key](https://aistudio.google.com/apikey)")
 
 method = st.radio("Add your study material", ["Paste notes", "Upload PDF"], horizontal=True)
