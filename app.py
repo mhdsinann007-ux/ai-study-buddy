@@ -1,4 +1,5 @@
 import json
+import time
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -47,14 +48,27 @@ NOTES:
         try:
             with st.spinner("Preparing your study pack..."):
                 client = genai.Client(api_key=api_key.strip())
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.3,
-                        response_mime_type="application/json"
-                    )
-                )
+                response = None
+                for attempt in range(3):
+                    try:
+                        response = client.models.generate_content(
+                            model=model,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                temperature=0.3,
+                                response_mime_type="application/json"
+                            )
+                        )
+                        break
+                    except Exception as api_error:
+                        error_text = str(api_error)
+                        is_temporary = "503" in error_text or "UNAVAILABLE" in error_text
+                        if not is_temporary or attempt == 2:
+                            raise
+                        wait_seconds = 3 * (2 ** attempt)
+                        st.warning(f"Gemini is busy. Retrying in {wait_seconds} seconds...")
+                        time.sleep(wait_seconds)
+
                 st.session_state["pack"] = json.loads(response.text)
         except Exception as exc:
             st.error(f"Could not generate the study pack: {exc}")
